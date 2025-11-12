@@ -16,11 +16,13 @@ def get_missing_steps(row, steps):
         Output: (2, 4)
     """
     missing_steps = []
-    ##############################################################################
-    ### STUB: INSERT CODE HERE: Get missing steps as a tuple for each row.###
-    ##############################################################################
-
-    raise NotImplementedError("Get missing steps as a tuple for each row.")
+    for step in steps:
+        column_name = f"step{step}_missing"
+        value = row.get(column_name, None)
+        if value is None:
+            raise KeyError(f"Column '{column_name}' not found in the DataFrame.")
+        if value == 0:
+            missing_steps.append(step)
     return tuple(sorted(missing_steps))
 
 def generate_all_subsets(steps):
@@ -48,11 +50,13 @@ def compute_v_S(df, all_subsets_missing):
         Output: 
             v_S = {(): 0.8, (1,): 0.7, (2,): 0.6, (1, 2): 0.5}
     """
-    ##################################################################################
-    ### STUB: INSERT CODE HERE: Compute v(S) for all subsets of missing steps.###
-    ##################################################################################
-
-    raise NotImplementedError("Implement the code to compute v(S) for all subsets of missing steps.")
+    v_S = {}
+    for subset in all_subsets_missing:
+        subset_rows = df[df['missing_steps'] == subset]
+        if subset_rows.empty:
+            v_S[subset] = np.nan
+        else:
+            v_S[subset] = subset_rows['is_correct'].mean()
     return v_S
 
 def compute_marginal_contributions(steps, v_S):
@@ -70,28 +74,19 @@ def compute_marginal_contributions(steps, v_S):
     Delta_sum = {i: 0.0 for i in steps}
     valid_permutations_count = 0
 
-    total_steps_set = set(steps)
-
     for pi in permutations:
         valid_permutation = True
         for i in steps:
             idx_i = pi.index(i)
-            #############################################################################################
-            ### STUB: INSERT CODE HERE: Retrieve S_i, S_i_union_i, S_i_sorted, S_i_union_i_sorted###
-            #############################################################################################
-
-            raise NotImplementedError("Implement the retrieval of S_i, S_i_union_i, and their sorted tuples.")
-            v_S_i = v_S.get(missing_S_i_sorted, np.nan)
-            v_S_i_union_i = v_S.get(missing_S_i_union_i_sorted, np.nan)
+            missing_S_i = tuple(sorted(pi[:idx_i]))
+            missing_S_i_union_i = tuple(sorted(pi[:idx_i + 1]))
+            v_S_i = v_S.get(missing_S_i, np.nan)
+            v_S_i_union_i = v_S.get(missing_S_i_union_i, np.nan)
             if np.isnan(v_S_i) or np.isnan(v_S_i_union_i):
                 valid_permutation = False
                 break
             else:
-                ###############################################################################
-                ### STUB: INSERT CODE HERE: Compute the marginal contribution of step i###
-                ###############################################################################
-
-                raise NotImplementedError("Implement the computation of the marginal contribution of step i.")
+                Delta_sum[i] += v_S_i_union_i - v_S_i
         if valid_permutation:
             valid_permutations_count += 1
     return Delta_sum, valid_permutations_count
@@ -108,11 +103,12 @@ def compute_shapley_values(Delta_sum, valid_permutations_count, steps):
         Output: 
             Shapley_values = {1: 0.04, 2: 0.06}
     """
-    ##############################################################
-    ### STUB: INSERT CODE HERE: Compute the Shapley values###
-    ##############################################################
-
-    raise NotImplementedError("INSERT CODE HERE: Compute the Shapley values")
+    if valid_permutations_count == 0:
+        return {step: np.nan for step in steps}
+    shapley_values = {
+        step: Delta_sum[step] / valid_permutations_count
+        for step in steps
+    }
     return shapley_values
 
 def main():
@@ -120,23 +116,14 @@ def main():
 
     df['missing_steps'] = df.apply(get_missing_steps, axis=1, args=(steps,))
 
-    ######################################################################################
-    # STUB: INSERT CODE HERE: Generate all possible subsets for the missing steps #       (1 line of code)
-    ######################################################################################
+    all_subsets_missing = generate_all_subsets(steps)
+    v_S = compute_v_S(df, all_subsets_missing)
+    Delta_sum, valid_permutations_count = compute_marginal_contributions(steps, v_S)
+    shapley_values = compute_shapley_values(Delta_sum, valid_permutations_count, steps)
 
-    raise NotImplementedError("Implement the code to generate all possible subsets for the missing steps.")
-
-    ###############################################
-    # STUB: INSERT CODE HERE: Compute v(S) #    (1 line of code)
-    ###############################################
-
-    raise NotImplementedError("Implement the code to compute v(S).")
-
-    #############################################################
-    # STUB: INSERT CODE HERE: Compute the Shapley values and print for each step #
-    #############################################################
-
-    raise NotImplementedError("Implement the code to compute the Shapley values.")
+    for step in steps:
+        value = shapley_values.get(step, np.nan)
+        print(f"Step {step} Shapley Value: {value:.4f}" if not np.isnan(value) else f"Step {step} Shapley Value: NaN")
 
     
 
