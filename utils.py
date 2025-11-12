@@ -1,27 +1,48 @@
+import torch
 
 
 def predict_model(model, tokenizer, messages, configuration=None):
-    ######################################
-    ### STUB: INSERT THE CODE HERE###
-    ######################################
-    
-    raise NotImplementedError("Build the Transformers package operations here based on the configurations given in the assignment")
     """
-    This function, `predict_model`, is designed to interact with QWEN models to generate predictions
-    based on a conversation history. 
+    Generate a response using the provided Qwen model/tokenizer pair and a chat-style message list.
 
     Args:
-        model: The pre-trained language model to be used for generating responses.
-        tokenizer: the tokenizer corresponding to the model.
-        messages: A list of dictionaries representing the conversation history,
-                  where each dictionary has a "role" (e.g., "system", "user", or "assistant") 
-                  and "content" (the message text).
-        configuration: initially, the model used should be max_token_limit of 2000, with temperature of 0.1
-        The assessment would mainly be assessed the correctness of the implementation, rather than the performance
-
-    Returns:
-        The model's response as a string.
+        model: Pre-trained causal LM (e.g., Qwen/Qwen2-1.5B-Instruct).
+        tokenizer: Matching tokenizer for the model.
+        messages (list[dict]): Chat history with `role` and `content`.
+        configuration (dict, optional): Supports `temperature` and `max_token_limit`.
     """
+    if configuration is None:
+        configuration = {}
+
+    temperature = configuration.get("temperature", 0.1)
+    max_token_limit = configuration.get("max_token_limit", 2000)
+
+    if not messages:
+        raise ValueError("The `messages` list cannot be empty.")
+
+    pad_token_id = tokenizer.pad_token_id or tokenizer.eos_token_id
+
+    model_inputs = tokenizer.apply_chat_template(
+        messages,
+        tokenize=True,
+        add_generation_prompt=True,
+        return_tensors="pt"
+    ).to(model.device)
+
+    generation_kwargs = {
+        "max_new_tokens": max_token_limit,
+        "temperature": temperature,
+        "do_sample": temperature > 0,
+        "pad_token_id": pad_token_id,
+    }
+
+    with torch.no_grad():
+        generated_ids = model.generate(model_inputs, **generation_kwargs)
+
+    response_ids = generated_ids[0, model_inputs.shape[-1]:]
+    response = tokenizer.decode(response_ids, skip_special_tokens=True).strip()
+
+    return response
 
 
 def model_evaluation(model_type, model, tokenizer, system_content, question, formatted_options, configuration=None):
