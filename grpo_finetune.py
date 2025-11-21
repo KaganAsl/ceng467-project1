@@ -36,11 +36,14 @@ def reward_function(prompts: list, completions: list, question : list, correct_a
     # print("***** Question: ", question[0])
     # print("***** Correct_answer: ", correct_answer[0])
 
-    ######################################
-    ### STUB: INSERT THE CODE HERE ###
-    ######################################
-
-    raise NotImplementedError("Reward function for GRPO algorithm. It can handle multiple completions per question and rewards them comperatively. By default, it is n=8 repetitions.")
+    rewards = []
+    for completion, correct in zip(completions, correct_answer):
+        chosen = extract_chosen_option(completion)
+        if chosen == correct:
+            rewards.append(1.0)
+        else:
+            rewards.append(0.0)
+    return rewards
 
 
 # ------------------------------------------------ EXAMPLE SCENARIO for reward function ------------------------------------------------
@@ -82,11 +85,25 @@ print(dataset, "\n")
 
 # Preprocess the dataset to create 'prompt' and 'correct_answer' fields as seen in the above example.
 def preprocess_function(examples):
-    ######################################
-    ### STUB: INSERT THE CODE HERE ###
-    ######################################
+    prompts = []
+    correct_answers = []
     
-    raise NotImplementedError("Preprocess the dataset to create 'prompt' and 'correct_answer' fields.")
+    for q, c, a in zip(examples['question'], examples['choices'], examples['answer']):
+        # Parse choices if they are strings
+        if isinstance(c, str):
+            c_list = eval(c)
+        else:
+            c_list = c
+            
+        formatted_options = "\n".join(
+            [f"{opt}" for i, opt in enumerate(c_list)]
+        )
+        
+        prompt = f"{INSTRUCTION}\n\n-----------\n\nQuestion: {q}\n\nOptions:\n{formatted_options}"
+        prompts.append(prompt)
+        correct_answers.append(a)
+        
+    return {'prompt': prompts, 'correct_answer': correct_answers}
 
 
 dataset = dataset.map(preprocess_function, batched=True, remove_columns=['answer'])
