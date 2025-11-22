@@ -1,1 +1,2 @@
 Start evaluating the mmlu-redux-college_mathematics dataset with comat method using qwen2 model. (temperature=0.7, max_token_limit=2000)
+Final Accuracy: 30.30%
