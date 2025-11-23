@@ -70,7 +70,7 @@ ex_row['correct_answer'] = ex_row['answer']
 # print(ex_row['prompt'], "\n")
 
 test_output = 8 * ["To solve this problem, we can use the formula for the number of edges in a complete graph with \\(n\\) vertices:\n\n\\[ E = \\frac{n(n - 1)}{2} \\]\n\nwhere \\(E\\) represents the total number of edges.\n\nGiven \\(n = 10\\), we can substitute \\(n = 10\\) into the formula:\n\n\\[ E = \\frac{10(10 - 1)}{2} \\]\n\\[ E = \\frac{10 \\times 9}{2} \\]\n\\[ E = 5 \\times 9 \\]\n\\[ E = 45 \\]\n\nTherefore, a complete graph with 10 vertices has 45 edges.\n\nMatched option: D<|im_end|>"]
-rewards = reward_function([ex_row], test_output, [ex_row['question']], [ex_row['correct_answer']])
+rewards = reward_function([ex_row]*8, test_output, [ex_row['question']]*8, [ex_row['correct_answer']]*8)
 print(f"~~~~~~ Rewards for toy example output: {rewards} \n")
 
 # ----------------------------------------------------------------------------------------------
